@@ -231,7 +231,7 @@ function obtainResults(days, offset, lambda)
 
     for l in 1:days
         for k in 1:length(competencies)
-            D_lhk[l, :, k] = FindDemand1(k, maxAHT)[l+offset,:] #in order to take 20 days other than the first 20 you offset [l,:] with eg. [l+20,:] - this gives the next 20 days
+            D_lhk[l, :, k] = FindDemand(k, maxAHT)[1][l+offset,:] #in order to take 20 days other than the first 20 you offset [l,:] with eg. [l+20,:] - this gives the next 20 days
         end
     end
 

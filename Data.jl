@@ -3,7 +3,7 @@ using XLSX, DataFrames, LinearAlgebra, MathOptInterface
 # Constants
 noOfDays = 20
 noOfTimeSteps = 32
-lambda = 0.7
+lambda = 1
 competencies = ["BB", "Faktura_Chatt", "Mob", "Reskontra", "Reskontra_Chatt"]
 
 #Agents
@@ -48,7 +48,7 @@ noOfAgentsPerComp[1] = sum(AGENT_I[:,1])
 noOfAgentsPerComp[2] = sum(AGENT_I[:,2])
 noOfAgentsPerComp[3] = sum(AGENT_I[:,3])
 noOfAgentsPerComp[4] = sum(AGENT_I[:,4])
-noOfAgentsPerComp[5] = sum(AGENT_I[:,5]) 
+noOfAgentsPerComp[5] = sum(AGENT_I[:,5])
 
 
 #SHIFT_J = [1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]'
@@ -120,7 +120,7 @@ function FindDemand(competence::Int, F_hk::Int) #finds demand per time step over
 
         for j in startRow:endRow #avg AHT
             if (!ismissing(sheet[j,3+4*(i-1)]) && sheet[j,3+4*(i-1)] != 0)
-                summation = summation + (sheet[j,4+4*(i-1)] + sheet[j,5+4*(i-1)])/sheet[j,3+4*(i-1)]
+                summation = summation + (sheet[j,4+4*(i-1)])/sheet[j,3+4*(i-1)] #+ sheet[j,5+4*(i-1)]
                 counter = counter+1
             end
 
@@ -157,13 +157,13 @@ function FindDemand(competence::Int, F_hk::Int) #finds demand per time step over
     noOfCalls = noOfCalls[rowsToKeep, :] #remove rows from noOfCalls
 
     #demand = zeros(Int, daysInYear[competence], noOfTimeSteps)
-    demand = (noOfCalls .* round(Int, summation/counter))./F_hk # noOfCalls * AHT / F_hk, should maybe subtract no of agents by 1 to get maxwait- rather than maxhandling time, in that case do so in the model file.
+    demand = (noOfCalls .* (round(Int, summation/counter)+180))./F_hk # noOfCalls * AHT / F_hk, should maybe subtract no of agents by 1 to get maxwait- rather than maxhandling time, in that case do so in the model file.
     #println("AHT: ", round(Int, summation/counter), "s")
 
-    return demand, round(Int, summation/counter), noOfCalls
+    return demand, round(Int, summation/counter)+180, noOfCalls #+180 = avg. after call work.
 end
 
-#D_lhk = FindDemand(1, 900)[3]
+#D_lhk = FindDemand(1, 900)[1]
 #sum(D_lhk[1,:])
 
 # a = [i for i in 38:75]
@@ -206,7 +206,7 @@ end
 function FindDemand1(competence::Int, F_hk::Int)
     noOfCalls = TeliaDemand(competence)[1]
     AHT = FindDemand(competence, F_hk)[2]
-    demand = (noOfCalls .* AHT)./F_hk
+    demand = ((noOfCalls .* AHT)./F_hk)
     return demand
 end
 

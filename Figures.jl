@@ -1,8 +1,7 @@
-#nclude("Data.jl")
+#include("Data.jl")
 #include("OptMinConv.jl")
 #include("OptMoreColsConv.jl")
 #include("PreMoreColsConv.jl")
-
 
 using PlotlyJS
 
@@ -17,7 +16,7 @@ yvals3 = [sum(w[i][3,:]) for i in x]
 yvals4 = [sum(w[i][4,:]) for i in x]
 yvals5 = [sum(w[i][5,:]) for i in x]
 
-plot([
+wplot=plot([
     scatter(name="Competence 1", x=x, y=vec(yvals1), mode="markers+lines", line_width=1),
     scatter(name="Competence 2",x=x, y=vec(yvals2), mode="markers+lines", line_width=1),
     scatter(name="Competence 3",x=x, y=vec(yvals3), mode="markers+lines", line_width=1),
@@ -27,6 +26,7 @@ plot([
     Layout(title="Number of agents required per day", xaxis_title="Day", yaxis_title="Number of agents"))
   
 ##
+savefig(wplot, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\LPwplot.png")
 
 
 
@@ -126,11 +126,11 @@ c5 = plot([
 Layout(title="Total availability/demand for competence 5", xaxis_title="Day", yaxis_title="Number of agents"))
 relayout!(c5, barmode="group")
 
-savefig(c1, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\PrebarAv071.pdf")
-savefig(c2, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\barAv0952RMP.pdf")
-savefig(c3, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\barAv0953RMP.pdf")
-savefig(c4, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\barAv0954RMP.pdf")
-savefig(c5, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\barAv0955RMP.pdf")
+savefig(c1, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarAv071.png")
+savefig(c2, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarAv072.png")
+savefig(c3, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarAv073.png")
+savefig(c4, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarAv074.png")
+savefig(c5, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarAv075.png")
 ##
 
 ## Plot y_h/w_j over D_h
@@ -139,9 +139,9 @@ day = 1
 #D = ceil.(Int, r[4])
 D = r[4]
 yu_lhk = r[3]
-#w_kj = r[1][day]
+w_kj = r[1][day]
 #yu_lhk = yfrac[day]
-w_kj = v[day]
+#w_kj = v[day]
 a_hj = r[2][day]
 
 xvals1 = D[day,:,1]
@@ -166,7 +166,7 @@ yp = plot([
     bar(name="y_h",x=1:noOfTimeSteps, y=yvals1),
     bar(name="D_h",x=1:noOfTimeSteps, y=xvals1)],
 
-    Layout(title="Availability/demand per time-step for competence 1, day 5", xaxis_title="h", yaxis_title="Number of agents")
+    Layout(title="Availability/demand per time step", xaxis_title="Tine step", yaxis_title="Number of agents")
 )
 relayout!(yp, barmode="group")
 
@@ -174,63 +174,74 @@ wp = plot([
     bar(name="Availability", x=1:noOfTimeSteps, y=yvals11),
     bar(name="Demand",x=1:noOfTimeSteps, y=xvals1)],
 
-    Layout(title="Availability/demand per time step for competence 1, day 1", xaxis_title="Time step", yaxis_title="Number of agents")
+    Layout(title="Availability/demand per time step", xaxis_title="Time step", yaxis_title="Number of agents")
 )
 relayout!(wp, barmode="group")
 
-savefig(wp, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\barHRMP.pdf")
+savefig(wp, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\IntbarH07.png")
 ##
 
 #show(yu_lhk[1][:,1]')
 #w_kj[1,:]'
 
 ## Plot of c1*sum(y_h) over c2*sum(a_hj*w_j),   lambda is included in "Data.jl"
-day = 10
-cost = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5]
+day = 1
+cost = [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5]
 xyvals = zeros(2, length(cost))
-ywvals = zeros(2, length(cost))
+xyvals1 = zeros(2, length(cost))
 
 for i in 1:length(cost)
     println("lambda = ", cost[i])
-    res = obtainResults(20, 0, cost[i])
+    res = obtainResultsLP(1, 0, cost[i])
+    res1 = obtainResults(1, 0, cost[i])
     yu_lhk = res[3]
     a_lhj = res[2]
     w_lkj = res[1]
-    #xyvals[1,i] = (1-cost[i])*(sum(sum(sum((a_lhj[day][h,j])*w_lkj[day][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj[day],2) for k in COMPETENCE_K)) + 
-    #sum(sum(((findlast(x -> x == 1, BitArray(a_lhj[day][:,j])) - findnext(BitArray(a_lhj[day][:,j]), 1)) >= 24 ? 2*(1-cost[i])*w_lkj[day][k,j] : (1-cost[i])*w_lkj[day][k,j]) for k in COMPETENCE_K) for j in 1:size(a_lhj[day],2)))
-    #xyvals[2,i] = cost[i]*(sum(sum(yu_lhk[day][h,k] for h in TIMESTEP_H) for k in COMPETENCE_K))
-    xyvals[1,i] = sum(sum(sum((a_lhj[day][h,j])*w_lkj[day][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj[day],2) for k in COMPETENCE_K))
+    yu_lhk1 = res1[3]
+    a_lhj1 = res1[2]
+    w_lkj1 = res1[1]
+    xyvals[1,i] = (sum(sum(sum((a_lhj[day][h,j])*w_lkj[day][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj[day],2) for k in COMPETENCE_K)) + 
+    sum(sum(((findlast(x -> x == 1, BitArray(a_lhj[day][:,j])) - findnext(BitArray(a_lhj[day][:,j]), 1)) >= 24 ? 2*w_lkj[day][k,j] : w_lkj[day][k,j]) for k in COMPETENCE_K) for j in 1:size(a_lhj[day],2)))
+    xyvals1[1,i] = (sum(sum(sum((a_lhj1[day][h,j])*w_lkj1[day][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj1[day],2) for k in COMPETENCE_K)) + 
+    sum(sum(((findlast(x -> x == 1, BitArray(a_lhj1[day][:,j])) - findnext(BitArray(a_lhj1[day][:,j]), 1)) >= 24 ? 2*w_lkj1[day][k,j] : w_lkj1[day][k,j]) for k in COMPETENCE_K) for j in 1:size(a_lhj1[day],2)))
+
     xyvals[2,i] = sum(sum(yu_lhk[day][h,k] for h in TIMESTEP_H) for k in COMPETENCE_K)
+    xyvals1[2,i] = sum(sum(yu_lhk1[day][h,k] for h in TIMESTEP_H) for k in COMPETENCE_K)
 end
 
-plot([
-    scatter(name="lambda=1", x=[xyvals[1,1]], y=[xyvals[2,1]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.9", x=[xyvals[1,2]], y=[xyvals[2,2]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.8", x=[xyvals[1,3]], y=[xyvals[2,3]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.7", x=[xyvals[1,4]], y=[xyvals[2,4]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.6", x=[xyvals[1,5]], y=[xyvals[2,5]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.5", x=[xyvals[1,6]], y=[xyvals[2,6]], mode="markers+lines", line_width=1)],
-    #scatter(name="lambda=0.4", x=[xyvals[1,7]], y=[xyvals[2,7]], mode="markers+lines", line_width=1),
-    #scatter(name="lambda=0.3", x=[xyvals[1,8]], y=[xyvals[2,8]], mode="markers+lines", line_width=1),
-    #scatter(name="lambda=0.2", x=[xyvals[1,9]], y=[xyvals[2,9]], mode="markers+lines", line_width=1),
-    #scatter(name="lambda=0.1", x=[xyvals[1,10]], y=[xyvals[2,10]], mode="markers+lines", line_width=1)],
-    #scatter(name="lambda=0", x=[xyvals[1,11]], y=[xyvals[2,11]], mode="markers+lines", line_width=1)], 
 
-    Layout(title="Pareto front", xaxis_title="(1-lambda)-term", yaxis_title="lambda-term")
-)
+res9 = obtainResults(1, 0, 0.95)
+yu_lhk = res9[3]
+a_lhj = res9[2]
+w_lkj = res9[1]
+w_lkj[1]
+day=1
+x = (sum(sum(sum((a_lhj[day][h,j])*w_lkj[day][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj[day],2) for k in COMPETENCE_K)) + 
+sum(sum(((findlast(x -> x == 1, BitArray(a_lhj[day][:,j])) - findnext(BitArray(a_lhj[day][:,j]), 1)) >= 24 ? 2*w_lkj[day][k,j] : w_lkj[day][k,j]) for k in COMPETENCE_K) for j in 1:size(a_lhj[day],2)))
+y = sum(sum(yu_lhk[day][h,k] for h in TIMESTEP_H) for k in COMPETENCE_K)
 
-plot([
-    #scatter(name="lambda=1", x=[xyvals[1,1]], y=[xyvals[2,1]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.95", x=[xyvals[1,2]], y=[xyvals[2,2]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.9", x=[xyvals[1,3]], y=[xyvals[2,3]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.85", x=[xyvals[1,4]], y=[xyvals[2,4]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.8", x=[xyvals[1,5]], y=[xyvals[2,5]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.75", x=[xyvals[1,6]], y=[xyvals[2,6]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.7", x=[xyvals[1,7]], y=[xyvals[2,7]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.65", x=[xyvals[1,8]], y=[xyvals[2,8]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.6", x=[xyvals[1,9]], y=[xyvals[2,9]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.55", x=[xyvals[1,10]], y=[xyvals[2,10]], mode="markers+lines", line_width=1),
-    scatter(name="lambda=0.5", x=[xyvals[1,11]], y=[xyvals[2,11]], mode="markers+lines", line_width=1)],
+pareto = plot([
+    #scatter(name="λ = 1", x=[xyvals[1,1]], y=[xyvals[2,1]], mode="markers"),
+    scatter(name="λ = 0.95", x=[xyvals[1,1]], y=[xyvals[2,1]], mode="markers"),
+    scatter(name="λ = 0.9", x=[xyvals[1,2]], y=[xyvals[2,2]], mode="markers"),
+    scatter(name="λ = 0.85", x=[xyvals[1,3]], y=[xyvals[2,3]],mode="markers"),
+    scatter(name="λ = 0.8", x=[xyvals[1,4]], y=[xyvals[2,4]], mode="markers"),
+    scatter(name="λ = 0.75", x=[xyvals[1,5]], y=[xyvals[2,5]], mode="markers"),
+    scatter(name="λ = 0.7", x=[xyvals[1,6]], y=[xyvals[2,6]], mode="markers"),
+    scatter(name="λ = 0.65", x=[xyvals[1,7]], y=[xyvals[2,7]], mode="markers"),
+    scatter(name="λ = 0.6", x=[xyvals[1,8]], y=[xyvals[2,8]], mode="markers", marker_color="brown"),
+    scatter(name="λ = 0.55", x=[xyvals[1,9]], y=[xyvals[2,9]], mode="markers", marker_color="black"),
+    scatter(name="λ = 0.5", x=[xyvals[1,10]], y=[xyvals[2,10]], mode="markers", marker_color="darkgreen"),
+    scatter(showlegend=false,name="λ = 0.95", x=[xyvals1[1,1]], y=[xyvals1[2,1]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.9", x=[xyvals1[1,2]], y=[xyvals1[2,2]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.85", x=[xyvals1[1,3]], y=[xyvals1[2,3]],mode="markers"),
+    scatter(showlegend=false,name="λ = 0.8", x=[xyvals1[1,4]], y=[xyvals1[2,4]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.75", x=[xyvals1[1,5]], y=[xyvals1[2,5]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.7", x=[xyvals1[1,6]], y=[xyvals1[2,6]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.65", x=[xyvals1[1,7]], y=[xyvals1[2,7]], mode="markers"),
+    scatter(showlegend=false,name="λ = 0.6", x=[xyvals1[1,8]], y=[xyvals1[2,8]], mode="markers", marker_color="brown"),
+    scatter(showlegend=false,name="λ = 0.55", x=[xyvals1[1,9]], y=[xyvals1[2,9]], mode="markers", marker_color="black"),
+    scatter(showlegend=false,name="λ = 0.5", x=[xyvals1[1,10]], y=[xyvals1[2,10]], mode="markers", marker_color="darkgreen")],
     #scatter(name="lambda=0.45", x=[xyvals[1,12]], y=[xyvals[2,12]], mode="markers+lines", line_width=1),
     #scatter(name="lambda=0.4", x=[xyvals[1,13]], y=[xyvals[2,13]], mode="markers+lines", line_width=1),
     #scatter(name="lambda=0.35", x=[xyvals[1,14]], y=[xyvals[2,14]], mode="markers+lines", line_width=1),
@@ -242,31 +253,10 @@ plot([
     #scatter(name="lambda=0.05", x=[xyvals[1,20]], y=[xyvals[2,20]], mode="markers+lines", line_width=1),
     #scatter(name="lambda=0", x=[xyvals[1,21]], y=[xyvals[2,21]], mode="markers+lines", line_width=1)], 
 
-    Layout(title="Pareto front for day 10", xaxis_title="Total availability", yaxis_title="Amount of understaffing")
+    Layout(title="Pareto front", xaxis_title="Total availability + paid breaks", yaxis_title="Total understaffing", plot_bgcolor="white", xaxis_gridcolor = "lightgray", yaxis_gridcolor = "lightgray")
 )
 
-a = plot([
-    scatter(name="lambda=0.95", x=[xyvals[1,1]], y=[xyvals[2,1]], mode="markers"),
-    scatter(name="lambda=0.9", x=[xyvals[1,2]], y=[xyvals[2,2]], mode="markers"),
-    scatter(name="lambda=0.85", x=[xyvals[1,3]], y=[xyvals[2,3]], mode="markers"),
-    scatter(name="lambda=0.8", x=[xyvals[1,4]], y=[xyvals[2,4]], mode="markers"),
-    scatter(name="lambda=0.75", x=[xyvals[1,5]], y=[xyvals[2,5]], mode="markers"),
-    scatter(name="lambda=0.7", x=[xyvals[1,6]], y=[xyvals[2,6]], mode="markers"),
-    scatter(name="lambda=0.65", x=[xyvals[1,7]], y=[xyvals[2,7]], mode="markers"),
-    scatter(name="lambda=0.6", x=[xyvals[1,8]], y=[xyvals[2,8]], mode="markers"),
-    scatter(name="lambda=0.55", x=[xyvals[1,9]], y=[xyvals[2,9]], mode="markers"),
-    scatter(name="lambda=0.5", x=[xyvals[1,10]], y=[xyvals[2,10]], mode="markers")],
-
-    Layout(title="Pareto front", xaxis_title="(1-lambda)-term", yaxis_title="lambda-term")
-)
-#xyvals[1,i] = (1-cost[i])*(sum(sum(sum((a_lhj[1][h,j])*w_lkj[1][k,j] for h in TIMESTEP_H) for j in 1:size(a_lhj[1],2) for k in COMPETENCE_K)) + 
-#    sum(sum(((findlast(x -> x == 1, BitArray(a_lhj[1][:,j])) - findnext(BitArray(a_lhj[1][:,j]), 1)) >= 24 ? 2*(1-cost[i])*w_lkj[1][k,j] : (1-cost[i])*w_lkj[1][k,j]) for k in COMPETENCE_K) for j in 1:size(a_lhj[1],2)))
- #   xyvals[2,i] = cost[i]*(sum(sum(yu_lhk[1][h,k] for h in TIMESTEP_H) for k in COMPETENCE_K))
-
-b = plot([
-    scatter(name="lambda=0.95-0.05", x=xyvals[1,:], y=xyvals[2,:], mode="markers+lines", line_width=1)],
-    Layout(title="Pareto front", xaxis_title="(1-lambda)-term", yaxis_title="lambda-term")
-    )
+savefig(pareto, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\paretowith1.png")
 
 
 ## bar plot of x_ijl summed over l and j to get total shifts taken by agent i during planning period
@@ -287,8 +277,8 @@ plot([
 
 # bar plot of sum_j w_jk
 day = 1
-#w_kj = r[1][day]
-w_kj = v[day]
+w_kj = r[1][day]
+#w_kj = v[day]
 a_hj = r[2][day]
 telia_w1 = TeliaDemand(1)[2][day,:]
 telia_w2 = TeliaDemand(2)[2][day,:]
@@ -309,41 +299,63 @@ forecast_4 = TeliaDemand(4)[1][day,:]
 forecast_5 = TeliaDemand(5)[1][day,:]
 
 p1=plot([
-    bar(name="Model", x=1:38, y=w_l1),
-    bar(name="Telia", x=1:38, y=telia_w1),
-    bar(name="Forecast calls", x=1:38, y=forecast_1)],
-    Layout(title="Availability per time step, Model vs Telia, competence 1, day 1", xaxis_title="Time step", yaxis_title="Number of agents/calls")
+    bar(name="Model", x=1:noOfTimeSteps, y=w_l1),
+    bar(name="Telia", x=1:noOfTimeSteps, y=telia_w1),
+    bar(name="Forecast calls", x=1:noOfTimeSteps, y=forecast_1)],
+    Layout(title="Availability per time step, Model vs Telia", xaxis_title="Time step", yaxis_title="Number of agents/calls")
 )
 p2=plot([
-    bar(name="Model", x=1:38, y=w_l2),
-    bar(name="Telia", x=1:38, y=telia_w2),
-    bar(name="Forecast calls", x=1:38, y=forecast_2)],
-    Layout(title="Availability per time step, Model vs Telia, competence 2, day 1", xaxis_title="Time step", yaxis_title="Number of agents/calls")
+    bar(name="Model", x=1:noOfTimeSteps, y=w_l2),
+    bar(name="Telia", x=1:noOfTimeSteps, y=telia_w2),
+    bar(name="Forecast calls", x=1:noOfTimeSteps, y=forecast_2)],
+    Layout(title="Availability per time step, Model vs Telia", xaxis_title="Time step", yaxis_title="Number of agents/calls")
 )
 
 p3=plot([
-    bar(name="Model", x=1:38, y=w_l3),
-    bar(name="Telia", x=1:38, y=telia_w3),
-    bar(name="Forecast calls", x=1:38, y=forecast_3)],
-    Layout(title="Availability per time step, Model vs Telia, competence 3, day 1", xaxis_title="Time step", yaxis_title="Number of agents/calls")
+    bar(name="Model", x=1:noOfTimeSteps, y=w_l3),
+    bar(name="Telia", x=1:noOfTimeSteps, y=telia_w3),
+    bar(name="Forecast calls", x=1:noOfTimeSteps, y=forecast_3)],
+    Layout(title="Availability per time step, Model vs Telia", xaxis_title="Time step", yaxis_title="Number of agents/calls")
 )
 
 p4=plot([
-    bar(name="Model", x=1:38, y=w_l4),
-    bar(name="Telia", x=1:38, y=telia_w4),
-    bar(name="Forecast calls", x=1:38, y=forecast_4)],
-    Layout(title="Availability per time step, Model vs Telia, competence 4, day 1", xaxis_title="Time step", yaxis_title="Number of agents/calls")
+    bar(name="Model", x=1:noOfTimeSteps, y=w_l4),
+    bar(name="Telia", x=1:noOfTimeSteps, y=telia_w4),
+    bar(name="Forecast calls", x=1:noOfTimeSteps, y=forecast_4)],
+    Layout(title="Availability per time step, Model vs Telia", xaxis_title="Time step", yaxis_title="Number of agents/calls")
 )
 
 p5=plot([
-    bar(name="Model", x=1:38, y=w_l5),
-    bar(name="Telia", x=1:38, y=telia_w5),
-    bar(name="Forecast calls", x=1:38, y=forecast_5)],
-    Layout(title="Availability per time step, Model vs Telia, competence 5, day 1", xaxis_title="Time step", yaxis_title="Number of agents/calls")
+    bar(name="Model", x=1:noOfTimeSteps, y=w_l5),
+    bar(name="Telia", x=1:noOfTimeSteps, y=telia_w5),
+    bar(name="Forecast calls", x=1:noOfTimeSteps, y=forecast_5)],
+    Layout(title="Availability per time step, Model vs Telia", xaxis_title="Time step", yaxis_title="Number of agents/calls")
 )
 
-savefig(p1, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0951.pdf")
-savefig(p2, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0952.pdf")
-savefig(p3, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0953.pdf")
-savefig(p4, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0954.pdf")
-savefig(p5, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0955.pdf")
+savefig(p1, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0951.png")
+savefig(p2, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0952.png")
+savefig(p3, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0953.png")
+savefig(p4, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0954.png")
+savefig(p5, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\MvT0955.png")
+
+
+# Bar chart for number of incoming calls per time step for a given day and competence
+days=1:20
+competence=4
+maxAHT = 900
+noOfCallsIn20days = FindDemand(competence, maxAHT)[3][1:20,:]
+
+occurences = zeros(1, round(Int, maximum(noOfCallsIn20days)))
+for i in 1:round(Int, maximum(noOfCallsIn20days))
+    occurences[i] = count(x -> x == i, noOfCallsIn20days)
+end
+
+calls = plot([
+    bar(x=1:round(Int,maximum(noOfCallsIn20days)), y=vec(occurences), marker_color="green")],
+
+    Layout(title="Occurences of number of incoming calls", xaxis_title="Number of incoming calls", yaxis_title="Number of occurences"), 
+)
+
+
+savefig(calls, "C:\\Users\\Asus\\OneDrive\\Skrivbord\\JuliaPlots\\calls4.png")
+

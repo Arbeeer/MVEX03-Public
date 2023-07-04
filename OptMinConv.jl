@@ -1,5 +1,4 @@
-using JuMP, Gurobi, Clp, Pkg, Cbc
-using LinearAlgebra, Printf, Tables, CSV, XLSX
+using JuMP, Gurobi, Clp, Pkg, Cbc, GLPK, BenchmarkTools, Statistics, LinearAlgebra, Printf, Tables, CSV, XLSX
 include("Data.jl")
 include("SmallSubproblem.jl")
 include("BigSubproblem.jl")
@@ -35,6 +34,7 @@ function MinConvComb(SHIFT_Jc, D_hk, lambda)
     
 
     set_optimizer(m, Gurobi.Optimizer)
+    #set_optimizer(m, GLPK.Optimizer)
     println("solving MinConvComb...")
     optimize!(m)
     println("Termination status, problem: ", termination_status(m))
@@ -166,6 +166,7 @@ function IntMinConvComb(SHIFT_Jc, D_hk, lambda)
         sum(sum(w_kj[k,j] for j in 1:size(SHIFT_Jc,2)) for k in COMPETENCE_K) <= size(AGENT_I,1))
 
     set_optimizer(m, Gurobi.Optimizer)
+    #set_optimizer(m, GLPK.Optimizer)
     println("solving IntMinConvComb...")
     optimize!(m)
     println("Termination status, problem: ", termination_status(m))
@@ -201,6 +202,7 @@ function MILPmodel(w_kjl, SHIFT_Jc, days)
 
 
     set_optimizer(m1, Gurobi.Optimizer)
+    #set_optimizer(m1, GLPK.Optimizer)
     println("solving MILPmodel...")
     optimize!(m1)
     println("Termination status, problem: ", termination_status(m1))
@@ -245,11 +247,55 @@ function obtainResults(days, offset, lambda)
     return results, genShifts, yvals, D_lhk
 end
 
+function obtainResultsLP(days, offset, lambda)
+    maxAHT = 900
+    D_lhk = zeros(days, length(TIMESTEP_H), length(competencies)) 
+
+    for l in 1:days
+        for k in 1:length(competencies)
+            D_lhk[l, :, k] = FindDemand(k, maxAHT)[1][l+offset,:] #in order to take 20 days other than the first 20 you offset [l,:] with eg. [l+19,:] - this gives the next 20 days
+        end
+    end
+
+    results = []
+    genShifts = []
+    yvals = []
+    for i in 1:days
+        println("DAY: ", i)
+        colGen = ColumnGeneration(SHIFT_J, D_lhk[i,:,:], lambda)
+        #intSol = IntMinConvComb(colGen, D_lhk[i,:,:], lambda)
+        LPSol = MinConvComb(colGen, D_lhk[i,:,:], lambda)
+        results = push!(results, LPSol[3])
+        genShifts = push!(genShifts, colGen)
+        yvals = push!(yvals, LPSol[4])
+    end
+    #println("SHIFTRESULTS: ", genShifts)
+    #println("W-RESULTS: ", results)
+    return results, genShifts, yvals, D_lhk
+end
+
+#times = Benchmark(10, 1, 0.7)
+    
+#timer = zeros(10)
+
+#result = @benchmark begin
+ #   r = obtainResultsLP(1, 0, lambda)
+    #MILPmodel(r[1], r[2], noOfDays)
+#end
+
+#timer[10] = result.times[1]/1e9
+#mean = sum(timer)/10
+#stdVal = std(timer)
+#medianVal = median(timer)
+#minVal = minimum(timer)
+#maxVal = maximum(timer)
+
 r = obtainResults(noOfDays, 0, lambda)
-#finalSolution = MILPmodel(r[1], r[2], noOfDays)
-#f1 = round.(Int, finalSolution[1])
+finalSolution = MILPmodel(r[1], r[2], noOfDays)
+f1 = round.(Int, finalSolution[1])
 #f2 = finalSolution[2]
 #f3 = finalSolution[3]
+
 
 #show(r[2][20]')
 
@@ -262,7 +308,7 @@ r = obtainResults(noOfDays, 0, lambda)
 
 #sum(finalSolution[1][:,:,1])
 
-#r[2][1]'
+r[2][1]'
 
 #show(w)
 
@@ -297,71 +343,91 @@ r = obtainResults(noOfDays, 0, lambda)
 
 #sum(finalSolution[1][:,:,1])
 
-maxAHT = 900
-    D_lhk = zeros(noOfDays, length(TIMESTEP_H), length(competencies)) 
-
-  for l in 1:noOfDays
-        for k in 1:length(competencies)
-        D_lhk[l, :, k] = FindDemand1(k, maxAHT)[l,:]
-        end
-    end
-v = []
-yfrac = []
-for l in 1:noOfDays
-n = MinConvComb(r[2][l], D_lhk[l,:,:], lambda)
-v = push!(v, n[3])
-yfrac = push!(yfrac, n[4])
-#println(n[2])
-end
-
-#show(v)
-
-#sum(IntMinConvComb(r[2][4], D_lhk[4,:,:], lambda)[3])
-
-#include("ShortShifts.jl")
-#include("MediumShifts.jl")
-#include("LongShifts.jl")
-
-#k=0
-#for i in 1:size(r[2][1], 2)
- #   if (IsValid(r[2][1][:,i]))
-  #      k=k+1
-   # end
-#end
-
-#k
-
-#IsValid(r[2][1][:,4])
-#r[2][1][:,1]'
-
 
 #whereAreU = zeros(Int, 45, 1) #find what shifts the agents are assigned a cartain day
 #for j in 1:45
- #   whereAreU[j,:] = findall(x -> x == 1, f1[j,:,1])
+ #   indices = findall(x -> x == 1, f1[j,:,1])
+  #  if isempty(indices)
+   #     whereAreU[j] = 0
+    #else
+     #   whereAreU[j,:] = findall(x -> x == 1, f1[j,:,1])
+    #end
 #end
 
 #show(whereAreU'.-1)
+
+#show(whereAreU')
 
 #length(whereAreU)
 
 
 #howShiftLooks = []
 #for i in 1:45
- #   currentShift = whereAreU[i]
-  #  howShiftLooks = push!(howShiftLooks, findall(x -> x == 1, r[2][1][:,currentShift]))
-#end
-
-#howShiftLooks[1]'
-
-#(howShiftLooks[45].-1)'
-
-
-#for i in 1:45
- #   if (howShiftLooks[i].-1 == A[i])
-  #      println("yes ", i)
-   # else
-    #    println("no ", i)
+ #   if whereAreU[i] == 0
+        #currentShift = 0
+  #  else
+    #    currentShift = whereAreU[i]
+   #     howShiftLooks = push!(howShiftLooks, findall(x -> x == 1, r[2][1][:,currentShift]))
     #end
 #end
 
+#howShiftLooks
+
+#(howShiftLooks[29].-1)'
+
+#uniqueShifts = []
+#for i in 1:size(howShiftLooks,1)
+ #   if !in(howShiftLooks[i], uniqueShifts)
+  #      push!(uniqueShifts, howShiftLooks[i])
+   # end
+#end
+
+#sortedUniqueShifts = sort!(uniqueShifts, by = x-> x[1])
+
+#countOccurrence = zeros(Int, size(sortedUniqueShifts,1))
+#for i in 1:size(sortedUniqueShifts,1)
+    #count = 0
+    #for j in 1:size(howShiftLooks,1)
+       # if (sortedUniqueShifts[i] == howShiftLooks[j])
+          #  count = count+1
+        #end
+    #end
+    #countOccurrence[i] = count
+#end
+
+#show(countOccurrence)
+#(sortedUniqueShifts[15].-1)'
+
+
 #howShiftLooks[45]'
+
+#agents = []
+#shifts = []
+#for j in 1:size(r[2][1],2)
+ #   agentsWithShiftJ = findall(x -> x==1, f1[:,j,1])
+  #  if (!isempty(agentsWithShiftJ))
+   #     agents = push!(agents, agentsWithShiftJ)
+    #    shitfs = push!(shifts, j)
+    #end
+#end
+
+#agents
+#shifts'
+
+#findall(x -> x==1, f1[:,1,1])
+
+#agentsShifts = Dict()
+#for i in 1:size(sortedUniqueShifts,1)
+ #   agentsShifts[shifts[i]] = agents[i]
+#end
+
+#r[2][1][:,89]'
+
+
+#sortedUniqueShifts[19]'.-1
+
+#r[2][1][:,90]'
+
+#agentsShifts[22]'
+
+#AGENT_I[42,:]'

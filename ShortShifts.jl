@@ -15,7 +15,13 @@ function GenerateMatricesShort(n::Int)
     return matrices
 end
 
-#show(GenerateMatricesShort(16))
+#GenerateMatricesShort(16)
+p=16/32
+H=64
+q=6/32
+#(p*H-q*H)*(H-p*H)
+(H^2)*(p-q)*(1-p)
+(p-q)*(1-p)
 
 # define the restrictions
 function IsValidShort(arr)

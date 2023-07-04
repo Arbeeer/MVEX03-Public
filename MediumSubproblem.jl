@@ -111,6 +111,7 @@ function BuildAndSolveMedium(u_h, lambda)
     @constraint(m, sum(v_nhs[5,h,s] for h in 2:noOfTimeSteps+2, s in 1:h-1) == 1)
 
     set_optimizer(m, Gurobi.Optimizer)
+    #set_optimizer(m, GLPK.Optimizer)
     optimize!(m)
     println("Termination status, problem: ", termination_status(m))
         

@@ -15,7 +15,7 @@ function GenerateMatricesMedium(n::Int)
     return matrices
 end
 
-#show(GenerateMatrices(23))
+#show(GenerateMatricesMedium(23))
 
 # define the restrictions
 function IsValidMedium(arr)
